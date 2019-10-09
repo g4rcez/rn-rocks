@@ -5,7 +5,7 @@ const toSneak = (str) =>
 		.map((x: string) => x.toLowerCase())
 		.join("_");
 
-const ObjectSneakToCamel = (someObject: any) =>
+const ObjectCamelToSneak = (someObject: any) =>
 	Object.keys(someObject).reduce((acc: Object, el: string) => ({ ...acc, [toSneak(el)]: someObject[el] }), {});
 
-export default ObjectSneakToCamel;
+export default ObjectCamelToSneak;
