@@ -6,6 +6,8 @@ import Page from "../components/Page";
 import Colors from "../helpers/Colors";
 import useCollaborators from "../hooks/useCollaborators";
 import User from "../model/User";
+import usePagination from "../hooks/usePagination";
+import routes from "./routes";
 
 const Logo = require("../assets/logo.png");
 
@@ -36,7 +38,6 @@ const styles = StyleSheet.create({
 		color: "#FFF"
 	},
 	rowFront: {
-		color: Colors["gray-dark"],
 		alignItems: "stretch",
 		backgroundColor: "#fff",
 		borderBottomColor: Colors.gray,
@@ -89,15 +90,32 @@ const styles = StyleSheet.create({
 		width: 25
 	}
 });
-const ViewCollaborators = () => {
+
+const ViewCollaborators = (props: any) => {
 	const [viewFab, setViewFab] = useState(false);
 	const collaborators = useCollaborators();
+	// const { currentList, goBack, goForward, showGoBack, showGoForward } = usePagination(collaborators);
+
 	const changeView = () => setViewFab((previous) => !previous);
+
+	const goToAddCollaborators = () => props.navigation.navigate(routes.AddCollaborator);
 
 	return (
 		<Page title="Collaborators">
 			<ScrollView style={{ flex: 1 }}>
 				<Text>Collaborators</Text>
+				{/* <View style={{ flex: 1, backgroundColor: "#eee", justifyContent: "space-around", flexDirection: "row" }}>
+					<View>
+						<Button disabled={!showGoBack} onPress={goBack}>
+							<Text>{"<"}</Text>
+						</Button>
+					</View>
+					<View>
+						<Button disabled={!showGoForward} onPress={goForward}>
+							<Text>{">"}</Text>
+						</Button>
+					</View>
+				</View> */}
 				<SwipeListView
 					keyExtractor={(item) => `${item.id}-key-extractor`}
 					data={collaborators}
@@ -105,7 +123,12 @@ const ViewCollaborators = () => {
 						<TouchableHighlight style={styles.rowFront} underlayColor={"#AAA"} key={`touch-item-${item.id}`}>
 							<ListItem thumbnail>
 								<Left>
-									<Thumbnail source={{ uri: item.photoUrl }} small />
+									<Thumbnail
+										source={{
+											uri: item.photoUrl || "https://discovery-park.co.uk/wp-content/uploads/2017/06/avatar-default.png"
+										}}
+										small
+									/>
 								</Left>
 								<Body style={{ flex: 1, justifyContent: "flex-start" }}>
 									<Text>{item.name}</Text>
@@ -136,7 +159,7 @@ const ViewCollaborators = () => {
 			</ScrollView>
 			<Fab direction="up" active={viewFab} onPress={changeView} position="bottomRight" style={{ backgroundColor: Colors.indigo }}>
 				<Icon name="share" />
-				<Button style={{ backgroundColor: Colors.green }}>
+				<Button style={{ backgroundColor: Colors.green }} onPress={goToAddCollaborators}>
 					<Icon name="person" />
 				</Button>
 			</Fab>
