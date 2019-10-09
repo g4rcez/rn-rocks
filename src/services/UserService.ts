@@ -1,6 +1,6 @@
 import HttpClient from "./HttpClient";
 import User from "../model/User";
-import ObjectSneakToCamel from "./ObjectSneakToCamel";
+import ObjectCamelToSneak from "./ObjectSneakToCamel";
 
 const mapUserPayload = (data: any) =>
 	new User({
@@ -31,15 +31,15 @@ export default {
 	},
 	async createUser(user: User) {
 		try {
-			const { data } = await HttpClient.post(`/users/`, ObjectSneakToCamel(user));
-			return mapUserPayload(data);
+			const response = await HttpClient.post(`/users/`, ObjectCamelToSneak(user));
+			return mapUserPayload(response.data.user);
 		} catch (error) {
 			throw Error(`Error on get all users`);
 		}
 	},
 	async updateUser(user: User) {
 		try {
-			const { data } = await HttpClient.put(`/users/${user.id}`, ObjectSneakToCamel(user));
+			const { data } = await HttpClient.put(`/users/${user.id}`, ObjectCamelToSneak(user));
 			return mapUserPayload(data);
 		} catch (error) {
 			throw Error(`Error on get all users`);
