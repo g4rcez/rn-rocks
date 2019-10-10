@@ -1,15 +1,12 @@
-import { Body, Button, Fab, Icon, Left, ListItem, Text, Thumbnail, View } from "native-base";
-import React, { useState } from "react";
+import { Body, Button, Icon, Left, ListItem, Text, Thumbnail, View, Footer } from "native-base";
+import React, { useRef } from "react";
 import { Animated, Dimensions, ScrollView, StyleSheet, TouchableHighlight, TouchableOpacity } from "react-native";
 import { SwipeListView } from "react-native-swipe-list-view";
 import Page from "../components/Page";
 import Colors from "../helpers/Colors";
 import useCollaborators from "../hooks/useCollaborators";
-import User from "../model/User";
 import usePagination from "../hooks/usePagination";
-import routes from "./routes";
-
-const Logo = require("../assets/logo.png");
+import User from "../model/User";
 
 const styles = StyleSheet.create({
 	container: {
@@ -92,33 +89,21 @@ const styles = StyleSheet.create({
 });
 
 const ViewCollaborators = (props: any) => {
-	const [viewFab, setViewFab] = useState(false);
 	const collaborators = useCollaborators();
-	// const { currentList, goBack, goForward, showGoBack, showGoForward } = usePagination(collaborators);
+	const scrollRef = useRef(null) as any;
+	const { currentList, goBack, goForward, showGoBack, showGoForward } = usePagination(collaborators);
 
-	const changeView = () => setViewFab((previous) => !previous);
-
-	const goToAddCollaborators = () => props.navigation.navigate(routes.AddCollaborator);
+	const onChangePage = (callback: () => any) => () => {
+		scrollRef.current.scrollTo({ x: 0, y: 0, animated: true });
+		callback();
+	};
 
 	return (
 		<Page title="Collaborators">
-			<ScrollView style={{ flex: 1 }}>
-				<Text>Collaborators</Text>
-				{/* <View style={{ flex: 1, backgroundColor: "#eee", justifyContent: "space-around", flexDirection: "row" }}>
-					<View>
-						<Button disabled={!showGoBack} onPress={goBack}>
-							<Text>{"<"}</Text>
-						</Button>
-					</View>
-					<View>
-						<Button disabled={!showGoForward} onPress={goForward}>
-							<Text>{">"}</Text>
-						</Button>
-					</View>
-				</View> */}
+			<ScrollView style={{ flex: 1 }} ref={scrollRef}>
 				<SwipeListView
+					data={currentList}
 					keyExtractor={(item) => `${item.id}-key-extractor`}
-					data={collaborators}
 					renderItem={({ item }: { item: User }) => (
 						<TouchableHighlight style={styles.rowFront} underlayColor={"#AAA"} key={`touch-item-${item.id}`}>
 							<ListItem thumbnail>
@@ -156,13 +141,21 @@ const ViewCollaborators = (props: any) => {
 					previewOpenValue={-40}
 					previewOpenDelay={0}
 				/>
+				<Footer style={{ backgroundColor: Colors.light, marginVertical: 10 }}>
+					<View style={{ flex: 1, backgroundColor: Colors.light, justifyContent: "space-around", flexDirection: "row" }}>
+						<View>
+							<Button disabled={!showGoBack} onPress={onChangePage(goBack)}>
+								<Text>{"<"}</Text>
+							</Button>
+						</View>
+						<View>
+							<Button disabled={!showGoForward} onPress={onChangePage(goForward)}>
+								<Text>{">"}</Text>
+							</Button>
+						</View>
+					</View>
+				</Footer>
 			</ScrollView>
-			<Fab direction="up" active={viewFab} onPress={changeView} position="bottomRight" style={{ backgroundColor: Colors.indigo }}>
-				<Icon name="share" />
-				<Button style={{ backgroundColor: Colors.green }} onPress={goToAddCollaborators}>
-					<Icon name="person" />
-				</Button>
-			</Fab>
 		</Page>
 	);
 };
