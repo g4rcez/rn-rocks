@@ -2,14 +2,16 @@ import { useCallback, useEffect } from "react";
 import useReducer from "./useReducer";
 
 function paginate<T>(array: T[], itensPerView: number) {
-	const shallowCopy = [...array];
-	const size = array.length;
-	const pageSize = Math.ceil(size / itensPerView);
-	const page = [];
-	for (let i = 1; i <= pageSize; i++) {
-		page.push(shallowCopy.slice(i * pageSize, itensPerView));
+	const chunked = [];
+	for (let element of array) {
+		const last = chunked[chunked.length - 1];
+		if (!last || last.length === itensPerView) {
+			chunked.push([element]);
+		} else {
+			last.push(element);
+		}
 	}
-	return page;
+	return chunked;
 }
 
 const initialState = {
