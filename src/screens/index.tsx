@@ -10,7 +10,7 @@ const AppNavigator = createStackNavigator(
 		[routes.AddCollaborator]: AddCollaborator
 	},
 	{
-		initialRouteName: routes.AddCollaborator,
+		initialRouteName: routes.Home,
 		headerMode: "none",
 		navigationOptions: {
 			headerVisible: false
