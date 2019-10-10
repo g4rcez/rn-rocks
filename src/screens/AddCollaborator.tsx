@@ -1,25 +1,19 @@
-import { Camera } from "expo-camera";
+import Constants from "expo-constants";
+import * as ImagePicker from "expo-image-picker";
 import * as Permissions from "expo-permissions";
-import { Button, Content, Form, Input, Item, Label, Text } from "native-base";
-import React, { useEffect, useState, useRef } from "react";
-import { KeyboardAvoidingView, StyleSheet, View } from "react-native";
+import { Button, Content, Form, Input, Item, Label, Text, Thumbnail } from "native-base";
+import React, { useEffect, useState } from "react";
+import { Alert, KeyboardAvoidingView, StyleSheet, View } from "react-native";
 import Page from "../components/Page";
 import { createDateMask } from "../helpers/Mask";
 import Translate from "../helpers/Translate";
 import useReducer from "../hooks/useReducer";
 import User from "../model/User";
 import UserService from "../services/UserService";
+import routes from "./routes";
 
 const styles = StyleSheet.create({
-	picture: {
-		flex: 1
-		// justifyContent: "center",
-		// alignItems: "center"
-	},
-	pictureElements: {
-		flex: 1,
-		marginTop: 20
-	}
+	picture: { flex: 1, justifyContent: "center", marginTop: 20, alignItems: "center" }
 });
 
 const initialState = new User();
@@ -29,26 +23,26 @@ type Actions = { field: keyof State; value: string };
 const events = {
 	onChange(state: State, action: Actions) {
 		return { ...state, [action.field]: action.value };
+	},
+	clear() {
+		return initialState;
 	}
 };
 
 const AddCollaborator = (props: any) => {
-	const [camState, setCamState] = useState({
-		hasCameraPermission: null,
-		type: Camera.Constants.Type.back
-	});
 	const [state, dispatch] = useReducer(initialState, events);
-
-	const ref = useRef(null);
-
-	useEffect(() => {
-		console.log("REFERENCE", ref.current);
-	}, [ref]);
+	const [loading, setLoading] = useState(false);
+	const [image, setImage] = useState("https://discovery-park.co.uk/wp-content/uploads/2017/06/avatar-default.png");
+	const goToHome = () => props.navigation.navigate(routes.Home);
 
 	useEffect(() => {
-		Permissions.askAsync(Permissions.CAMERA).then(() => {
-			setCamState({ hasCameraPermission: status === "granted", type: Camera.Constants.Type.back });
-		});
+		if (Constants.platform.ios) {
+			Permissions.askAsync(Permissions.CAMERA_ROLL).then(({ status }) => {
+				if (status !== "granted") {
+					alert("Sorry, we need camera roll permissions to make this work!");
+				}
+			});
+		}
 	}, []);
 
 	const onChange = (field: keyof User) => (value: string) => dispatch({ type: "onChange", field, value });
@@ -56,11 +50,33 @@ const AddCollaborator = (props: any) => {
 	const dateMask = createDateMask(state.admissionDate);
 
 	const submit = async () => {
+		setLoading(true);
 		try {
-			const response = UserService.createUser(state);
-			console.log("USER", response);
+			const response = await UserService.createUser({ ...state, photoUrl: image });
+			setLoading(false);
+			Alert.alert(Translate("SuccessOnSaveTitle"), Translate("SuccessOnSave")(response.name), [{ text: "OK", onPress: goToHome }], {
+				cancelable: false
+			});
+			dispatch({ type: "clear" });
 		} catch (error) {
+			setLoading(false);
 			console.log("deu ruim", error);
+		}
+	};
+
+	const _pickImage = async () => {
+		let result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: ImagePicker.MediaTypeOptions.All,
+			allowsEditing: true,
+			aspect: [4, 3],
+			base64: true,
+			exif: false,
+			quality: 1
+		});
+		// console.log(result);
+		if (!result.cancelled) {
+			//@ts-ignore
+			setImage(`data:image/gif;base64,${result!.base64}`);
 		}
 	};
 
@@ -69,21 +85,9 @@ const AddCollaborator = (props: any) => {
 			<KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
 				<Content style={{ flex: 1 }}>
 					<View style={styles.picture}>
-						{/* <Button transparent style={styles.pictureElements}> */}
-						{/* <Thumbnail
-								large
-								circular
-								source={{ uri: "https://discovery-park.co.uk/wp-content/uploads/2017/06/avatar-default.png" }}
-							/> */}
-						<Camera ref={ref} style={{ flex: 1, height: 450 }} type={camState.type}>
-							<Text>Camera</Text>
-						</Camera>
-						{/* </Button> */}
-						<View style={styles.pictureElements}>
-							<Button onPress={() => console.log(ref)}>
-								<Text>Add Picture</Text>
-							</Button>
-						</View>
+						<Button transparent onPress={_pickImage}>
+							<Thumbnail large circular source={{ uri: image }} />
+						</Button>
 					</View>
 					<Form>
 						<Item floatingLabel>
@@ -103,7 +107,7 @@ const AddCollaborator = (props: any) => {
 							<Input onChangeText={onChange("jobTitle")} value={state.jobTitle} autoCapitalize="words" />
 						</Item>
 						<View style={{ paddingHorizontal: 10, marginTop: 30 }}>
-							<Button full primary active block onPress={submit}>
+							<Button full primary active block onPress={submit} disabled={loading}>
 								<Text>{Translate("SaveButton")}</Text>
 							</Button>
 						</View>
